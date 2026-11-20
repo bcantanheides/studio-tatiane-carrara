@@ -21,7 +21,4 @@ export function slots(date, duration, busy, now = new Date()) {
  return result;
 }
 export function money(cents) { return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100); }
-export function message(service,date,start,name='') {
- const formatted=new Date(date+'T12:00:00-03:00').toLocaleDateString('pt-BR',{timeZone:ZONE});
- return `Olá, Tatiane!${name ? ' Meu nome é '+name+'.' : ''} Gostaria de agendar ${service.name} para o dia ${formatted}, às ${start}. Duração: ${service.duration} minutos. Valor informado: ${money(service.price)}. Podemos confirmar esse horário?`;
-}
+export function totals(services) { return services.reduce((sum,s)=>({duration:sum.duration+s.duration,price:sum.price+s.price}),{duration:0,price:0}); }

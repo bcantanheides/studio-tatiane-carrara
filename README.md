@@ -1,70 +1,83 @@
 # Studio Tatiane Carrara
 
-Aplicação de consulta de disponibilidade e solicitação de atendimento pelo WhatsApp. HTML5 semântico, CSS3, Bootstrap 5.3.9 e JavaScript (ES Modules), conforme as tecnologias do anexo. API em JavaScript e banco SQLite local / Cloudflare D1 na publicação. Não depende de React nem de ferramentas de compilação de interface.
+Aplicação de orçamento e agendamento com aprovação pelo gestor. Interface em HTML5, CSS3, Bootstrap 5.3.9 e JavaScript. API JavaScript; banco SQLite local e Cloudflare D1 na publicação.
 
-## Executar localmente
+## Executar
 
-1. Instale Node.js 22.13 ou superior (recomendado Node.js 24).
-2. Abra um terminal nesta pasta.
-3. Copie `.env.example` para `.env` e preencha `ADMIN_KEY` com uma chave longa e aleatória. No ambiente entregue, a chave já foi gerada; consulte o arquivo privado `ACESSO-ADMINISTRATIVO.txt` na pasta superior.
-4. Execute `npm start`.
-5. Abra `http://127.0.0.1:4173`. A administração fica em `http://127.0.0.1:4173/admin`.
+Requer Node.js 22.13 ou superior (recomendado 24). Na pasta do projeto:
 
-Não é necessário instalar pacotes. Bootstrap está incluído em `public/vendor/bootstrap.min.css`, com os avisos de licença originais. O servidor escuta apenas em loopback. O banco é criado em `data/agenda.sqlite`; não publique a pasta de dados ou o arquivo `.env`.
+```sh
+npm start
+```
 
-## Preparar o Studio para uso
+Não é necessário instalar pacotes. Bootstrap é distribuído em `public/vendor/`, com sua licença original. Crie `.env` a partir de `.env.example`, com uma chave longa em `ADMIN_KEY`. Na entrega existente, ela já foi configurada. O arquivo privado `ACESSO-ADMINISTRATIVO.txt`, na pasta superior, contém a chave de acesso. Nunca inclua esse arquivo ou `.env` no pacote de código.
 
-1. Acesse `/admin` e entre com sua chave.
-2. Em **Serviços e WhatsApp**, informe `55 + DDD + número` e salve. Nenhum número fictício foi configurado na entrega.
-3. Confira preços e durações. Os seis serviços iniciais reproduzem os valores do PDF.
-4. Registre todos os atendimentos que já estavam na agenda antes de liberar o site às clientes. A agenda inicia vazia, sem dados de demonstração.
-5. Use **Bloquear horário** para intervalos, pausas e compromissos. O expediente padrão é terça a sábado, das 9h às 18h.
-6. Após fechar um atendimento no WhatsApp, use **Registrar atendimento**. Para remarcar, use **Alterar**; para cancelar ou liberar um bloqueio, use **Cancelar/Liberar**.
+Abra `http://127.0.0.1:4173`. A área do gestor é `/admin`. O banco fica em `data/agenda.sqlite`. O servidor aplica as migrações locais pendentes sem apagar os registros existentes. Dados locais e hospedados são independentes. O servidor local escuta apenas em loopback.
 
-O acesso administrativo usa uma chave secreta configurada somente no servidor. Em hospedagem, use HTTPS. A chave é mantida na memória de sessão do navegador e removida ao sair. O site publicado inicialmente é privado pelo controle de acesso da plataforma; sua liberação às clientes exige uma decisão posterior de compartilhamento. Nunca compartilhe a chave administrativa com clientes.
+## Fluxo da cliente
 
-## Funcionamento
+1. Selecionar um ou mais serviços individualmente no catálogo.
+2. Consultar dias e horários que comportem a soma das durações, de terça a sábado, das 9h às 18h, no horário de Brasília.
+3. Preencher nome e telefone com DDD, conferir os itens e enviar o orçamento.
+4. Guardar protocolo, chave e link privado de acompanhamento.
+5. Consultar a decisão no próprio site. A consulta apresenta os itens solicitados, os aprovados, o valor e o horário confirmado.
 
-- Cliente escolhe serviço, data e horário e vê a mensagem antes de abrir o WhatsApp.
-- A API revalida a disponibilidade antes de fornecer o link `wa.me`.
-- Abrir o WhatsApp não envia a mensagem automaticamente e não reserva horário.
-- Confirmação, remarcação e cancelamento são acertados com a profissional. O painel registra a decisão e atualiza o calendário compartilhado.
-- Inícios são oferecidos em intervalos de 15 minutos, com todo o procedimento dentro do expediente. Datas passadas e domingos/segundas não podem ser escolhidos.
-- O banco impede intervalos sobrepostos, inclusive em operações concorrentes. Pedidos simultâneos no WhatsApp ainda dependem da escolha e confirmação de Tatiane.
-- A consulta pública só expõe horários disponíveis. Nomes e telefones são acessíveis apenas pela API administrativa autenticada.
-- O painel oferece agenda diária, semanal e de 31 dias, valores previstos, gestão do catálogo, bloqueios e lista de clientes derivada dos registros confirmados.
-- Datas e horários seguem `America/Sao_Paulo` (Brasília).
+Enviar orçamento não reserva a agenda. Podem existir pedidos pendentes concorrendo por um mesmo horário. Somente uma aprovação ocupa o intervalo, conforme os serviços efetivamente aprovados. Não há redirecionamento nem envio de mensagens pelo WhatsApp.
 
-## Validação e build
+## Fluxo do gestor
+
+- Entre em `/admin` com sua chave e abra **Orçamentos**.
+- Compare nome, telefone, horário, serviços separados, valores e duração. Pedidos com intervalos sobrepostos são sinalizados.
+- Clique em **Analisar e escolher serviços**. Todos vêm marcados; desmarque os que não serão executados para aprovar parcialmente.
+- Confira o novo total e término. É possível registrar uma observação para a cliente.
+- **Aprovar selecionados** confirma os itens escolhidos e ocupa a agenda em uma transação. Em caso de conflito, nenhuma decisão é gravada e o pedido permanece pendente.
+- **Não aprovar orçamento** encerra o pedido sem ocupar a agenda.
+- Outros pedidos concorrentes continuam pendentes para avaliação individual; não são rejeitados automaticamente.
+- A agenda permite alterar atendimentos, cancelar, criar registros manuais com vários serviços e bloquear horários.
+- A aba **Serviços** permite editar catálogo, preços e durações. Orçamentos já enviados guardam os itens, preços e durações da solicitação.
+- A aba **Clientes** reúne nome e telefone dos atendimentos confirmados.
+
+Antes de liberar o site para clientes, cadastre os compromissos já existentes e os intervalos de pausa. A chave administrativa continua a mesma. A publicação permanece privada pelo controle de acesso da plataforma até que o proprietário altere o compartilhamento.
+
+## Dados e proteção
+
+| Tabela | Uso |
+| --- | --- |
+| `settings` | Catálogo configurado; configuração antiga de telefone preservada, sem uso no fluxo atual |
+| `quotes` | Nome, telefone, data, início, itens separados em JSON, totais, decisão, observação e hash da chave de consulta |
+| `appointments` | Atendimento aprovado ou bloqueio, intervalo, nome/telefone e itens aprovados; vínculo único com o orçamento |
+
+Somente protocolo e chave corretos permitem consultar os detalhes de um pedido. A chave de consulta não é armazenada em texto no banco, apenas seu hash. A interface não recupera uma chave perdida: a cliente deve guardar os dados ou o link. O link usa fragmento de URL, que não é enviado como parte da requisição HTTP inicial. Não existe listagem pública de nomes e telefones. Todas as decisões exigem autorização administrativa no servidor.
+
+Os gatilhos SQL rejeitam sobreposição de registros confirmados. A aprovação e a criação do atendimento são transacionais, e o vínculo único impede duplicar o atendimento do mesmo orçamento. Cancelamentos mantêm o histórico. Atendimentos da versão anterior são preservados e exibidos com o serviço original.
+
+## Testes e build
 
 ```sh
 npm test
 npm run build
 ```
 
-Testes cobrem expediente, duração, dias fechados, datas inválidas, fuso, sobreposições, acesso administrativo, origem das requisições, concorrência no registro, bloqueio, remarcação, cancelamento, configuração e composição do link WhatsApp. Os testes usam banco em memória e não alteram a agenda de uso.
+Dez testes cobrem expediente, fuso, soma das durações, contatos obrigatórios, itens inválidos, pedidos concorrentes, aprovação parcial, conflito entre aprovações simultâneas, preservação de orçamento quando o catálogo muda, consulta protegida, cancelamento e migração de dados anteriores. Testes usam banco em memória. Foi validado no navegador um pedido local com dois serviços e aprovação de apenas um.
 
-O build gera um Worker ES module em `dist/server/index.js`, incorporando os arquivos HTML/CSS/JS. A configuração de hospedagem fica em `.openai/hosting.json` (`d1: "DB"`). O schema e as migrações ficam em `drizzle/`. A publicação precisa fornecer o binding `DB` e o segredo `ADMIN_KEY`. Dados locais e publicados são independentes.
+`scripts/build.mjs` incorpora a interface e a API no Worker `dist/server/index.js`. A hospedagem declara `DB` em `.openai/hosting.json`; precisa do segredo de servidor `ADMIN_KEY`. As migrações ficam em `drizzle/`. As migrações já aplicadas não devem ser modificadas. O projeto não é publicado no GitHub; a sincronização da publicação usa o repositório privado do Sites.
 
 ## Estrutura
 
-| Caminho | Conteúdo |
-| --- | --- |
-| `public/index.html` | Telas da cliente e da profissional |
-| `public/styles.css` | Identidade visual e responsividade |
-| `public/app.js` | Interações e consumo da API |
-| `src/domain.js` | Catálogo, regras de disponibilidade e mensagens |
-| `src/api.js` | API, validação e autorização |
-| `server.mjs` | Servidor local e adaptador SQLite |
-| `drizzle/0000_agenda.sql` | Tabelas, índice e gatilhos contra sobreposição |
-| `docs/PROJETO-REVISADO.md` | Escopo acadêmico ajustado |
+- `public/index.html`, `public/styles.css`, `public/app.js`: interface e interação.
+- `public/catalog-editor.js`: formulário de catálogo.
+- `src/domain.js`: catálogo inicial e regras de duração/disponibilidade.
+- `src/api.js`: pedidos, consulta, decisões, agenda e autorização.
+- `server.mjs`: execução local com SQLite.
+- `drizzle/`: schema e migrações incrementais.
+- `docs/PROJETO-REVISADO.md`: requisitos atualizados.
 
-## Limites e evolução
+## Limites
 
-Lembretes automáticos de 24 horas ficaram fora desta versão, conforme o ajuste de escopo: exigem um serviço de envio e execução agendada. Não há envio automático de mensagens, pagamento, reserva temporária nem confirmação automática pelo site. Figma foi citado no anexo como opção de prototipagem; esta entrega implementa diretamente as telas funcionais, sem alegar um protótipo Figma inexistente. O PDF original foi preservado; a redação revisada está no documento do projeto.
+A cliente precisa consultar a decisão; não há notificações automáticas. Não são implementados pagamento, lembretes, contas de clientes ou integração WhatsApp. Remarcações e cancelamentos são executados pelo gestor na agenda. Cada serviço é escolhido uma vez por pedido e executado sequencialmente; suas durações são somadas.
 
 ## Referências técnicas
 
-- [Bootstrap: distribuição e licença](https://getbootstrap.com/docs/5.3/getting-started/download/)
-- [Cloudflare D1: acesso ao banco e transações em lote](https://developers.cloudflare.com/d1/worker-api/d1-database/)
-- [Node.js: SQLite](https://nodejs.org/api/sqlite.html)
+- [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/download/)
+- [Cloudflare D1](https://developers.cloudflare.com/d1/worker-api/d1-database/)
+- [SQLite em Node.js](https://nodejs.org/api/sqlite.html)
