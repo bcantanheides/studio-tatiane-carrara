@@ -84,3 +84,8 @@ A confirmação deve ser consultada no site; não há mensagens ou notificaçõe
 - [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/download/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/worker-api/d1-database/)
 - [Node.js SQLite](https://nodejs.org/api/sqlite.html)
+
+## Revisão: cancelamento pela cliente e notificações
+
+Esta revisão substitui as restrições anteriores de cancelamento e de ausência de integração WhatsApp. O cadastro informa que o telefone será usado para aprovações, atualizações do serviço e cancelamentos e registra a autorização. A cliente pode cancelar pelo acompanhamento, com protocolo e chave, antes do início do atendimento; o gestor também pode cancelar, com motivo opcional. Ambos os fluxos liberam o horário e preservam o histórico de quem cancelou. Aprovações e cancelamentos registram uma notificação transacional, com tentativa de envio pela Meta Cloud API quando configurada. Falhas de envio não desfazem a operação da agenda. O envio real ainda depende de conectar a conta comercial e configurar credenciais e modelos. Consulte CONFIGURAR-WHATSAPP.md. Não há confirmação de entrega/leitura por webhook nesta versão. As 19 verificações automatizadas incluem envio simulado, cancelamento concorrente, proteção do protocolo e não duplicação de notificações.
+

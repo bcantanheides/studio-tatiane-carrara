@@ -22,7 +22,7 @@ Abra `http://127.0.0.1:4173`. A área do gestor é `/admin`. O banco fica em `da
 4. Guardar protocolo, chave e link privado de acompanhamento.
 5. Consultar a decisão no próprio site. A consulta apresenta os itens solicitados, os aprovados, o valor e o horário confirmado.
 
-Enviar orçamento não reserva a agenda. Podem existir pedidos pendentes concorrendo por um mesmo horário. Somente uma aprovação ocupa o intervalo, conforme os serviços efetivamente aprovados. Não há redirecionamento nem envio de mensagens pelo WhatsApp.
+Enviar orçamento não reserva a agenda. Podem existir pedidos pendentes concorrendo por um mesmo horário. Somente uma aprovação ocupa o intervalo, conforme os serviços efetivamente aprovados. A cliente pode cancelar pelo acompanhamento. Aprovações e cancelamentos geram notificações pelo WhatsApp, cujo envio depende da ativação da Meta Cloud API.
 
 ## Fluxo do gestor
 
@@ -74,10 +74,16 @@ Dez testes cobrem expediente, fuso, soma das durações, contatos obrigatórios,
 
 ## Limites
 
-A cliente precisa consultar a decisão; não há notificações automáticas. Não são implementados pagamento, lembretes, contas de clientes ou integração WhatsApp. Remarcações e cancelamentos são executados pelo gestor na agenda. Cada serviço é escolhido uma vez por pedido e executado sequencialmente; suas durações são somadas.
+A decisão continua disponível no acompanhamento. Notificações automáticas estão implementadas via Meta Cloud API, mas aguardam conexão da conta e credenciais para envio real. Clientes podem cancelar pedidos e atendimentos futuros com protocolo e chave. A profissional pode cancelar com motivo opcional. Não são implementados pagamento, lembretes ou contas de clientes. Remarcações são executadas pelo gestor na agenda. Cada serviço é escolhido uma vez por pedido e executado sequencialmente; suas durações são somadas.
 
 ## Referências técnicas
 
 - [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/download/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/worker-api/d1-database/)
 - [SQLite em Node.js](https://nodejs.org/api/sqlite.html)
+
+
+## Cancelamentos e WhatsApp
+
+Consulte docs/CONFIGURAR-WHATSAPP.md. O cadastro apresenta aviso de uso do telefone e exige autorização explícita para atualizações. A aba Notificações distingue mensagens pendentes, falhas e aceite pela API, sem afirmar entrega. A migração 0002_notifications.sql preserva os registros e não inventa autorização para clientes antigos. A suíte possui 19 testes; os testes de envio usam respostas simuladas e não enviam mensagens reais.
+
