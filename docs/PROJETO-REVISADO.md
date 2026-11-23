@@ -61,13 +61,23 @@ Exemplo: duas clientes enviam pedidos para as 14h. O gestor escolhe um deles, de
 
 ## Tecnologias e estrutura de dados
 
-HTML5 estrutura as telas; CSS3 e Bootstrap 5.3.9 fornecem estilos e responsividade; JavaScript implementa interface, cálculos, calendário e API. SQLite é usado localmente e Cloudflare D1 na hospedagem. A aplicação funcional demonstra as telas; não foi produzido arquivo Figma.
+Consulte a [seção 4 com justificativas, fluxograma e dicionário de dados](TECNOLOGIAS-E-FLUXO.md).
+
+| Tecnologia | Foi usada? | Finalidade na aplicação |
+| --- | --- | --- |
+| HTML5 | Sim | Estrutura o catálogo, o formulário de orçamento, o acompanhamento e o painel administrativo. Usa elementos nativos como formulários, botões e diálogos. Código em [public/index.html](../public/index.html). |
+| CSS3 e Bootstrap 5.3.9 | Sim | O CSS do Bootstrap fornece a grade responsiva, classes de espaçamento e estilos de formulários e botões. O CSS próprio define cores, cartões, calendário e aparência do painel. Código em [public/styles.css](../public/styles.css) e [public/vendor/bootstrap.min.css](../public/vendor/bootstrap.min.css). |
+| JavaScript | Sim | No navegador, atualiza as telas, calcula preços e durações e consulta a API. No servidor, valida solicitações e controla orçamentos, aprovações e cancelamentos. Código em [public/app.js](../public/app.js), [src/domain.js](../src/domain.js) e [src/api.js](../src/api.js). |
+| TypeScript | Não | O código usa módulos JavaScript executados diretamente pelo navegador ou pelo Node.js no ambiente local. |
+| Banco de dados | Sim | O SQLite local e o Cloudflare D1, configurado para hospedagem, armazenam serviços, orçamentos, agenda e notificações. As [migrações SQL](../drizzle/) criam e atualizam as tabelas e incluem gatilhos que impedem sobreposições na agenda. |
+| Prototipagem de telas (Figma) | Não documentada | O projeto registra que nenhum arquivo Figma foi produzido. As telas podem ser avaliadas na própria aplicação funcional. |
 
 | Tabela | Conteúdo e finalidade |
 | --- | --- |
 | `settings` | Catálogo editável. Configuração antiga de telefone é preservada, sem uso pelo fluxo atual. |
 | `quotes` | Protocolo, hash da chave, nome, telefone, dia, início, itens separados em JSON, duração e preço totais, situação, observação e datas da decisão. |
 | `appointments` | Intervalo confirmado ou bloqueado, contato, serviços aprovados em JSON, preço total, situação e vínculo único com o orçamento. |
+| `notifications` | Eventos de aprovação e cancelamento, estado de envio e resposta do provedor de WhatsApp. |
 
 Valores monetários são armazenados em centavos e horários em minutos desde meia-noite. A migração incremental `0001_quotes.sql` acrescenta os dados de orçamento sem apagar atendimentos antigos. Os gatilhos existentes continuam impedindo sobreposições. O código acompanha este documento na pasta do projeto; o README descreve execução, publicação e uso.
 

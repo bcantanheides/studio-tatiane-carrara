@@ -1,6 +1,6 @@
 import {money,time,totals} from '/domain.js';
-import {serviceEditor} from '/catalog-editor.js';
-const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+import {escapeHtml as esc,serviceEditor} from '/catalog-editor.js';
+const $=id=>document.getElementById(id);
 const isAdmin=location.pathname==='/admin',labels={pending:'Aguardando análise',approved:'Aprovado integralmente',partial:'Aprovado parcialmente',rejected:'Não aprovado'};
 let config,selectedIds=[],month,date,selectedTime,days={},sequence=0,key=sessionStorage.getItem('studio-admin')||'',appointments=[],quotes=[],clients=[],cancelId,decisionQuote,submission=null,statusQuote=null,cancelByClient=false;
 const selected=()=>config.services.filter(s=>selectedIds.includes(s.id));

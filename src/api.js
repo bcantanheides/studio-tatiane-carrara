@@ -1,4 +1,4 @@
-import {DEFAULT_SERVICES,today,validDate,workingDay,future,slots,totals} from './domain.js';
+import {DEFAULT_SERVICES,ZONE,today,validDate,workingDay,future,slots,totals} from './domain.js';
 import {notificationStatement,dispatchNotification,whatsappConfigured} from './notifications.js';
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
@@ -26,7 +26,7 @@ export async function api(request,env){
  if(admin){if(!env.ADMIN_KEY)return json({error:'A chave administrativa não foi configurada no servidor.'},503);if(!(await safeEqual(request.headers.get('authorization')||'','Bearer '+env.ADMIN_KEY)))return json({error:'Chave de acesso inválida.'},401);}
  let body={};if(request.method==='POST'){if(Number(request.headers.get('content-length')||0)>16000)fail('Dados muito extensos.',413);const raw=await request.text();if(raw.length>16000)fail('Dados muito extensos.',413);try{body=JSON.parse(raw);}catch{fail('Dados inválidos.');}if(!body||typeof body!=='object'||Array.isArray(body))fail('Dados inválidos.');}
  const config=await settings(db);
- if(p==='/api/catalog'&&request.method==='GET')return json({...config,today:today(),timezone:'America/Sao_Paulo'});
+ if(p==='/api/catalog'&&request.method==='GET')return json({...config,today:today(),timezone:ZONE});
  if(p==='/api/availability'&&request.method==='GET'){
   const selected=selectServices((u.searchParams.get('services')||'').split(',').filter(Boolean),config.services),{duration}=totals(selected);
   const month=u.searchParams.get('month');if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month||''))fail('Mês inválido.');
@@ -83,11 +83,10 @@ export async function api(request,env){
   const note=text(body.note,500),decidedAt=new Date().toISOString();
   if(body.action==='reject'){const r=await db.prepare("UPDATE quotes SET status='rejected',decision_note=?,decided_at=? WHERE id=? AND status='pending' AND cancelled_at IS NULL").bind(note,decidedAt,q.id).run();if(!r.meta.changes)fail('Este orçamento já foi analisado ou cancelado.',409);return json({ok:true});}
   if(body.action!=='approve')fail('Decisão inválida.');
-  // Preserve the original quoted price and duration when the catalog changes.
-  const original=JSON.parse(q.services_json),selected=selectServices(body.services,original),{duration,price}=totals(selected);validateInterval(q.date,q.start,duration);
-  const status=selected.length===original.length?'approved':'partial',id=crypto.randomUUID();
+  const quotedServices=JSON.parse(q.services_json),selected=selectServices(body.services,quotedServices),{duration,price}=totals(selected);validateInterval(q.date,q.start,duration);
+  const status=selected.length===quotedServices.length?'approved':'partial',id=crypto.randomUUID();
   const insert=db.prepare("INSERT INTO appointments(id,date,start,end,kind,service_id,service_name,price,client_name,client_phone,created_at,services_json,quote_id) SELECT ?,date,start,?,'appointment',?,?,?,?,?,?,?,id FROM quotes WHERE id=? AND status='pending' AND cancelled_at IS NULL").bind(id,q.start+duration,selected[0].id,selected.map(s=>s.name).join(' + '),price,q.client_name,q.client_phone,decidedAt,JSON.stringify(selected),q.id);
-  // Calendar insertion and decision are atomic; SQL triggers reject overlaps.
+  // A mesma transação grava a decisão, o atendimento e a notificação. Os gatilhos SQL rejeitam sobreposições.
   const results=await db.batch([insert,db.prepare("UPDATE quotes SET status=?,decision_note=?,decided_at=? WHERE id=? AND status='pending' AND cancelled_at IS NULL AND EXISTS (SELECT 1 FROM appointments WHERE id=?)").bind(status,note,decidedAt,q.id,id),notificationStatement(db,env,{id:'approval:'+q.id,event:'approval',q,a:{id,date:q.date,start:q.start,end:q.start+duration,services:selected,price,client_name:q.client_name,client_phone:q.client_phone},guardSql:'EXISTS(SELECT 1 FROM appointments WHERE id=?)',guardValues:[id]})]);
   if(!results[0].meta.changes||!results[1].meta.changes)fail('Este orçamento já foi analisado ou cancelado. Atualize o painel.',409);return json({ok:true,id,status,notification:await dispatchNotification(env,'approval:'+q.id)});
  }
